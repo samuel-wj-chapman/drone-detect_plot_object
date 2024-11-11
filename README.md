@@ -4,11 +4,13 @@ The intesion of this project is to convert detections in to gps location. This i
 
 
 todo:
-add detection model
-
-find current location of drone
+add detection model done
+find current location of drone 
 
 find current heading of drone
 
-translate detections to gps location
+translate detections to gps location done
 
+
+
+further hardware
