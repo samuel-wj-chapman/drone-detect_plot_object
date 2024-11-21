@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Drone Minimap</title>
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h3>Drone Minimap</h3>
+    <div id="map"></div>
+    <script src="config.js"></script>
+    <script>
+        let map;
+        let userMarker;
+        let detectionMarkers = [];
+
+        function initMap() {
+            const initialLocation = { lat: 37.7749, lng: -122.4194 }; // Example coordinates
+
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 15,
+                center: initialLocation
+            });
+
+            userMarker = new google.maps.Marker({
+                position: initialLocation,
+                map: map,
+                title: "Your Location"
+            });
+        }
+
+        function updateUserLocation(lat, lng) {
+            const newPosition = { lat: lat, lng: lng };
+            userMarker.setPosition(newPosition);
+            map.setCenter(newPosition);
+        }
+
+        function updateDetectionPoints(detections) {
+            // Clear existing markers
+            detectionMarkers.forEach(marker => marker.setMap(null));
+            detectionMarkers = [];
+
+            // Add new markers
+            detections.forEach(detection => {
+                const marker = new google.maps.Marker({
+                    position: { lat: detection.lat, lng: detection.lng },
+                    map: map,
+                    title: "Detection"
+                });
+                detectionMarkers.push(marker);
+            });
+        }
+
+        // Example of updating locations
+        setInterval(() => {
+            // Simulate new data
+            const newLat = 37.7749 + (Math.random() - 0.5) * 0.01;
+            const newLng = -122.4194 + (Math.random() - 0.5) * 0.01;
+            updateUserLocation(newLat, newLng);
+
+            const detections = [
+                { lat: newLat + 0.001, lng: newLng + 0.001 },
+                { lat: newLat - 0.001, lng: newLng - 0.001 }
+            ];
+            updateDetectionPoints(detections);
+        }, 5000); // Update every 5 seconds
+
+        window.onload = function() {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=initMap`;
+            script.async = true;
+            document.head.appendChild(script);
+        };
+    </script>
+</body>
+</html>
