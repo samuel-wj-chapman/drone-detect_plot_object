@@ -7,6 +7,48 @@ from pycocotools.coco import COCO
 import requests
 import zipfile
 
+
+class CustomCocoDataset(Dataset):
+    def __init__(self, root, classes):
+        self.root = root
+        self.classes = classes
+        # Initialize COCO dataset and filter for the specified classes
+        self.coco = COCO(os.path.join(root, 'annotations', 'instances_train2017.json'))
+        self.class_ids = self.coco.getCatIds(catNms=classes)
+        self.img_ids = self.coco.getImgIds(catIds=self.class_ids)
+        self.images = self.coco.loadImgs(self.img_ids)
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, idx):
+        # Load image and annotations
+        image_info = self.images[idx]
+        image_path = os.path.join(self.root, 'train2017', image_info['file_name'])
+        image = Image.open(image_path).convert('RGB')
+        
+        # Load annotations
+        ann_ids = self.coco.getAnnIds(imgIds=image_info['id'], catIds=self.class_ids, iscrowd=None)
+        annotations = self.coco.loadAnns(ann_ids)
+        
+        # Process annotations to extract boxes and labels
+        boxes = []
+        labels = []
+        for ann in annotations:
+            bbox = ann['bbox']
+            # Convert bbox from [x, y, width, height] to [x1, y1, x2, y2]
+            boxes.append([bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]])
+            labels.append(ann['category_id'])
+        
+        # Convert to tensors
+        boxes = torch.tensor(boxes, dtype=torch.float32)
+        labels = torch.tensor(labels, dtype=torch.int64)
+        
+        # Return image and target dictionary
+        target = {'boxes': boxes, 'labels': labels}
+        return image, target
+
+
 # Load the pre-trained YOLO model
 model = YOLOv11(pretrained=True)
 
@@ -97,42 +139,3 @@ engine = builder.build_cuda_engine(network)
 with open("yolov11.trt", "wb") as engine_file:
     engine_file.write(engine.serialize())
 
-class CustomCocoDataset(Dataset):
-    def __init__(self, root, classes):
-        self.root = root
-        self.classes = classes
-        # Initialize COCO dataset and filter for the specified classes
-        self.coco = COCO(os.path.join(root, 'annotations', 'instances_train2017.json'))
-        self.class_ids = self.coco.getCatIds(catNms=classes)
-        self.img_ids = self.coco.getImgIds(catIds=self.class_ids)
-        self.images = self.coco.loadImgs(self.img_ids)
-
-    def __len__(self):
-        return len(self.images)
-
-    def __getitem__(self, idx):
-        # Load image and annotations
-        image_info = self.images[idx]
-        image_path = os.path.join(self.root, 'train2017', image_info['file_name'])
-        image = Image.open(image_path).convert('RGB')
-        
-        # Load annotations
-        ann_ids = self.coco.getAnnIds(imgIds=image_info['id'], catIds=self.class_ids, iscrowd=None)
-        annotations = self.coco.loadAnns(ann_ids)
-        
-        # Process annotations to extract boxes and labels
-        boxes = []
-        labels = []
-        for ann in annotations:
-            bbox = ann['bbox']
-            # Convert bbox from [x, y, width, height] to [x1, y1, x2, y2]
-            boxes.append([bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]])
-            labels.append(ann['category_id'])
-        
-        # Convert to tensors
-        boxes = torch.tensor(boxes, dtype=torch.float32)
-        labels = torch.tensor(labels, dtype=torch.int64)
-        
-        # Return image and target dictionary
-        target = {'boxes': boxes, 'labels': labels}
-        return image, target
