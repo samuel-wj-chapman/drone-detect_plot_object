@@ -13,4 +13,15 @@ translate detections to gps location done
 
 
 
-further hardware
+Hardware test:
+
+SpeedyBee F405 WING Flight Controller
+jetson nano orion
+
+
+dataflow:
+telemetry data provided by flight controller passed over uart to jetson
+jetson seperate spotter camera attached. 
+likely want lte for person locaton updates
+
+
