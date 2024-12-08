@@ -2,6 +2,30 @@
 
 
 import math
+import cv2
+
+def undistort_fisheye_image(image, camera_matrix, dist_coeffs):
+    """
+    Undistort a fisheye image using the camera matrix and distortion coefficients.
+
+    :param image: The input fisheye image
+    :param camera_matrix: Camera matrix obtained from calibration
+    :param dist_coeffs: Distortion coefficients obtained from calibration
+    :return: Undistorted image
+    """
+    # Get the optimal new camera matrix
+    h, w = image.shape[:2]
+    new_camera_matrix, roi = cv2.getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, (w, h), 1, (w, h))
+
+    # Undistort the image
+    undistorted_image = cv2.undistort(image, camera_matrix, dist_coeffs, None, new_camera_matrix)
+
+    # Crop the image based on the ROI
+    x, y, w, h = roi
+    undistorted_image = undistorted_image[y:y+h, x:x+w]
+
+    return undistorted_image
+
 
 def calculate_gps_from_detection(drone_lat, drone_lon, drone_alt, heading, fov, image_width, image_height, detection_x, detection_y):
     """
