@@ -13,6 +13,7 @@
     <h3>Drone Minimap</h3>
     <div id="map"></div>
     <script src="config.js"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script> <!-- Add Socket.IO client library -->
     <script>
         let map;
         let userMarker;
@@ -54,6 +55,14 @@
                 detectionMarkers.push(marker);
             });
         }
+
+        // Initialize Socket.IO client
+        const socket = io();
+
+        // Listen for detection updates from the server
+        socket.on('detection_update', function(data) {
+            updateDetectionPoints([{ lat: data.lat, lng: data.lng }]);
+        });
 
         // Example of updating locations
         setInterval(() => {

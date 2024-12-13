@@ -3,11 +3,18 @@ import torch  # Assuming PyTorch is used for the model
 from torchvision import transforms
 from pymavlink import mavutil
 from translate import calculate_gps_from_detection
+from flask_socketio import SocketIO
+
 
 
 heading = 90  # add later correct method for heading
 
+def send_detection_data(lat, lng):
+    socketio.emit('detection_update', {'lat': lat, 'lng': lng})
 
+
+# Connect to the Flask server
+socketio = SocketIO(message_queue='redis://')
 # Load your YOLOv8 model (assuming it's a PyTorch model)
 model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # Example for YOLOv5, replace with YOLOv8
 
@@ -55,6 +62,7 @@ while cap.isOpened():
             drone_lat, drone_lon, drone_alt, heading, 90,  # Assuming FOV is 90 degrees
             frame.shape[1], frame.shape[0], centroid_x, centroid_y
         )
+        send_detection_data(detection_lat, detection_lon)
     # Retrieve GPS and altitude data
 
     # Display the frame
